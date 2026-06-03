@@ -593,7 +593,8 @@ closeAddModalBtn.addEventListener("click",
 // ======================
 let currentPage = 1;
 let totalPages = 1;
-let totalTaskCount = 0;
+let totalTasks = 0;
+const pageSize = 10;
 
 async function loadTasksFromAPI(page = 1) {
 
@@ -657,9 +658,9 @@ function renderPagination(totalTasks) {
         const start =(currentPage - 1) * 10 + 1;
 
         const end = Math.min(
-                currentPage * 10,
-                totalTasks
-            );
+            start + tasks.length - 1,
+            totalTasks
+        );
 
         rangeInfo.textContent =
             `Showing ${start}-${end} of ${totalTasks} tasks`;
