@@ -71,12 +71,23 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=env("DATABASE_URL", default=None)
-    )
-}
-
+if env("DATABASE_URL", default=None):
+    DATABASES = {
+        "default": dj_database_url.parse(
+            env("DATABASE_URL")
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DATABASE_NAME"),
+            "USER": env("DATABASE_USER"),
+            "PASSWORD": env("DATABASE_PASSWORD"),
+            "HOST": env("DATABASE_HOST"),
+            "PORT": env("DATABASE_PORT"),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
