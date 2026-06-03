@@ -522,11 +522,36 @@ function refreshUI() {
 
     const filteredTasks = getFilteredTasks();
     renderTasks(filteredTasks, taskList);
+    const taskRangeInfo = document.getElementById("taskRangeInfo");
+
+    if (taskRangeInfo) {
+
+        if (totalTasks === 0) {
+
+            taskRangeInfo.textContent = "Showing 0-0 of 0 tasks";
+
+        } else {
+
+            const start = ((currentPage - 1) * pageSize) + 1;
+
+            const end = Math.min(
+                    start + tasks.length - 1,
+                    totalTasks
+                );
+
+            taskRangeInfo.textContent =
+                `Showing ${start}-${end} of ${totalTasks} tasks`;
+        }
+    }
 
     attachTaskEvents();
-    initializeDragAndDrop(taskList, tasks, () => {}, refreshUI);
+    initializeDragAndDrop(
+        taskList,
+        tasks,
+        () => {},
+        refreshUI
+    );
 }
-
 // ======================
 // TASK EVENTS
 // ======================
@@ -579,6 +604,7 @@ async function loadTasksFromAPI(page = 1) {
 
         const data = await response.json();
         tasks = data.results;
+        totalTasks = data.count;
         currentPage = page;
         totalPages = Math.ceil(data.count / 10);
         updateApiPanel(data);
