@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} My Tasks {% endblock %}
+
+{% block content %}
+
+<div class="dashboard-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <h2>Tritix Tasks</h2>
+            <span>Task Management</span>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="#" class="sidebar-item active">
+                <span>📋 All Tasks</span>
+                <span id="allTasksCount" class="count-badge">0</span>
+            </a>
+
+            <a href="#" class="sidebar-item">
+                <span>📅 Today</span>
+                <span id="todayTasksCount" class="count-badge">0</span>
+            </a>
+
+            <a href="#" class="sidebar-item">
+                <span>💼 Work</span>
+                <span id="workCount" class="count-badge">0</span>
+            </a>
+
+            <a href="#" class="sidebar-item">
+                <span>❤️ Health</span>
+                <span id="healthCount" class="count-badge">0</span>
+            </a>
+
+            <a href="#" class="sidebar-item">
+                <span>👤 Personal</span>
+                <span id="personalCount" class="count-badge">0</span>
+            </a>
+            <button class="add-category-btn">
+                + Add Category
+            </button>
+        </nav>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOP NAVBAR -->
+        <header class="top-navbar">
+
+            <div class="nav-left">
+
+                <a href="#" class="nav-link active">Dashboard</a>
+                <a href="#" class="nav-link">Categories</a>
+                <a href="#" class="nav-link">Reports</a>
+
+            </div>
+
+            <div class="nav-right">
+
+                <a href="/api/tasks/" target="_blank" class="api-btn">REST API</a>
+                <a href="/api/" target="_blank" class="api-btn">DRF</a>
+
+                <button id="themeToggle" class="theme-btn">🌙</button>
+
+                <div class="user-avatar">
+                    {{ request.user.username|first|upper }}
+                </div>
+
+                <span class="username">
+                    {{ request.user.username }}
+                </span>
+
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+
+            </div>
+
+        </header>
+
+        <!-- Progress -->
+        <section class="progress-wrapper">
+
+            <div class="progress-header">
+                <div class="progress-label">Overall Progress</div>
+                <div id="progressInfo">0/0 tasks — 0%</div>
+            </div>
+
+            <div class="progress">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+
+        </section>
+
+        <!-- Filters -->
+        <section class="filters">
+
+            <input type="text" id="searchInput" placeholder="🔍 Search tasks...">
+
+            <select id="sortSelect">
+                <option value="date">Sort by: Due Date</option>
+                <option value="created">Sort by: Newest</option>
+                <option value="alphabetical">Sort by: A-Z</option>
+                <option value="priority">Sort by: Priority</option>
+            </select>
+
+            <select id="statusFilter">
+                <option value="all">Status</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+            </select>
+
+            <select id="categoryFilter">
+                <option value="all">Category</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Health">Health</option>
+            </select>
+
+            <select id="priorityFilter">
+                <option value="all">Priority</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+
+            <button id="openAddModalBtn">+ New Task</button>
+
+        </section>
+
+        <div class="drag-info">↕ Drag to reorder tasks</div>
+
+        <div class="task-header">
+
+            <div>TASK</div>
+            <div>CATEGORY</div>
+            <div>PRIORITY</div>
+            <div>DUE</div>
+            <div>ACTIONS</div>
+
+        </div>
+
+        <div id="taskList" class="task-list"></div>
+        
+        <div class="dashboard-footer">
+
+            <div class="footer-left">
+                <span id="taskRangeInfo">
+                    Showing 1-5 of 5 tasks
+                </span>
+            </div>
+
+            <div class="footer-center">
+                <button class="page-btn active">1</button>
+            </div>
+
+            <div class="footer-right">
+                <a href="#" id="clearCompleted">Clear completed</a>
+            </div>
+
+        </div>
+
+        <div class="api-panel">
+            <pre id="apiResponsePanel">Loading...</pre>
+        </div>   
+
+    </main>
+
+</div>
+
+<!-- ADD TASK MODAL -->
+<div id="addTaskModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Add Task</h2>
+
+        <input type="text" id="newTaskTitle" placeholder="Task title">
+
+        <select id="newTaskCategory">
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Health">Health</option>
+        </select>
+
+        <select id="newTaskPriority">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+
+        <input type="date" id="newTaskDate">
+
+        <div class="modal-actions">
+            <button id="closeAddModalBtn">Cancel</button>
+            <button id="createTaskBtn">Add Task</button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- EDIT TASK MODAL -->
+<div id="taskModal" class="modal">
+
+    <div class="modal-content">
+
+        <h2>Edit Task</h2>
+
+        <input type="text" id="editTitle">
+
+        <select id="editCategory">
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Health">Health</option>
+        </select>
+
+        <select id="editPriority">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+
+        <input type="date" id="editDate">
+
+        <div class="modal-actions">
+            <button id="closeModalBtn">Cancel</button>
+            <button id="saveEditBtn">Save Changes</button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+
+<div
+    id="categoryModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <h2>Add Category</h2>
+
+        <label>Category Name</label>
+
+        <input type="text" id="categoryName" placeholder="Enter category name">
+
+        <div class="modal-actions">
+            <button id="closeCategoryModal">Cancel</button>
+            <button id="saveCategoryBtn">Save Category</button>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="{% static 'js/storage.js' %}"></script>
+<script src="{% static 'js/ui.js' %}"></script>
+<script src="{% static 'js/drag.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+
+{% endblock %}

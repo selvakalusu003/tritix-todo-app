@@ -1,0 +1,75 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {% if object %}
+            Edit Task
+        {% else %}
+            Create Task
+        {% endif %}
+    </title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+
+            <h1>
+                {% if object %}
+                    Edit Task
+                {% else %}
+                    Create Task
+                {% endif %}
+            </h1>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Title</label>
+                    {{ form.title }}
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    {{ form.category }}
+                </div>
+
+                <div class="form-group">
+                    <label>Priority</label>
+                    {{ form.priority }}
+                </div>
+
+                <div class="form-group">
+                    <label>Due Date</label>
+                    {{ form.due_date }}
+                </div>
+
+                <div class="form-group checkbox-group">
+                    {{ form.completed }}
+                    <label>Completed</label>
+                </div>
+
+                <div class="delete-actions">
+                    <a href="{% url 'task-list' %}" class="cancel-delete-btn">Cancel</a>
+                    <button type="submit" class="save-task-btn">Save Task</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</body>
+</html>
