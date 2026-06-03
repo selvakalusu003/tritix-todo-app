@@ -566,23 +566,81 @@ closeAddModalBtn.addEventListener("click",
 // ======================
 // LOAD TASK FROM API
 // ======================
-async function loadTasksFromAPI() {
+let currentPage = 1;
+let totalPages = 1;
+let totalTaskCount = 0;
+
+async function loadTasksFromAPI(page = 1) {
+
     try {
-        const response = await fetch("/api/tasks/");
+        const response = await fetch(
+                `/api/tasks/?page=${page}`
+            );
 
         const data = await response.json();
-
         tasks = data.results;
-        updateApiPanel();
-
+        currentPage = page;
+        totalPages = Math.ceil(data.count / 10);
+        updateApiPanel(data);
+        renderPagination(data.count);
         refreshUI();
 
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error loading tasks:",error);
     }
 }
 
-async function updateApiPanel() {
+function renderPagination(totalTasks) {
+
+    const container = document.getElementById("paginationContainer");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    const pages = Math.ceil(totalTasks / 10);
+
+    for (
+        let i = 1;
+        i <= pages;
+        i++
+    ) {
+
+        const button = document.createElement("button");
+
+        button.classList.add("page-btn");
+
+        if (i === currentPage) {
+            button.classList.add("active");
+        }
+
+        button.textContent = i;
+
+        button.addEventListener("click",() => loadTasksFromAPI(i));
+
+        container.appendChild(button);
+    }
+
+    const rangeInfo =document.getElementById("taskRangeInfo");
+
+    if (rangeInfo) {
+
+        const start =(currentPage - 1) * 10 + 1;
+
+        const end = Math.min(
+                currentPage * 10,
+                totalTasks
+            );
+
+        rangeInfo.textContent =
+            `Showing ${start}-${end} of ${totalTasks} tasks`;
+    }
+}
+
+async function updateApiPanel(data) {
 
     const panel = document.getElementById("apiResponsePanel");
 
@@ -592,68 +650,12 @@ async function updateApiPanel() {
 
     panel.textContent = JSON.stringify(
             {
-                count: tasks.length,
-                results: tasks.slice(0, 5)
+                count: data.count,
+                next: data.next,
+                previous: data.previous,
+                results: data.results
             },
             null,
             2
         );
 }
-
-    const categoryModal = document.getElementById("categoryModal");
-    const saveCategoryBtn = document.getElementById("saveCategoryBtn");
-    const closeCategoryModal = document.getElementById("closeCategoryModal");
-    const addCategoryBtn = document.querySelector(".add-category-btn");
-
-    addCategoryBtn.addEventListener("click",
-        () => { categoryModal.classList.add("show");}
-    );
-
-    closeCategoryModal.addEventListener("click",
-        () => { categoryModal.classList.remove("show");}
-    );
-
-    saveCategoryBtn.addEventListener("click",
-        async () => {
-
-            const name = document.getElementById("categoryName") .value .trim();
-
-            if (!name) {
-                alert("Enter category name");
-                return;
-            }
-
-            try {
-
-                const response = await fetch(
-                        "/api/categories/",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRFToken": getCSRFToken()
-                            },
-
-                            body: JSON.stringify({
-                                name: name
-                            })
-                        }
-                    );
-
-                if (!response.ok) {
-                    throw new Error("Failed to create category");
-                }
-
-                document.getElementById("categoryName").value = "";
-
-                categoryModal.classList.remove("show");
-
-                await loadCategories();
-
-            }
-            catch (error) {
-                console.error(error);
-                alert("Unable to create category");
-            }
-        }
-    );
